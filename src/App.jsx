@@ -117,16 +117,6 @@ const MAIN_LINKS = [
     borderAccent: "rgba(200,149,90,0.22)",
   },
   {
-    id: "instagram",
-    icon: "📸",
-    title: "Instagram",
-    desc: "@maison_jenflox",
-    href: "https://instagram.com/maison_jenflox",
-    accent: "#D4A56A",
-    bgAccent: "rgba(212,165,106,0.08)",
-    borderAccent: "rgba(212,165,106,0.22)",
-  },
-  {
     id: "shop",
     icon: "🏬",
     title: "젠플록스 셀렉샵",
@@ -153,7 +143,7 @@ function Shell({ children }) {
   return (
     <div style={{
       minHeight:"100vh", background:"#0F0A06",
-      fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",
+      fontFamily:"'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif",
       color:"#F2EBE0", position:"relative", overflowX:"hidden",
     }}>
       <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
@@ -165,6 +155,7 @@ function Shell({ children }) {
       }}/>
       <div style={{ position:"relative", zIndex:1 }}>{children}</div>
       <style>{`
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
         ::-webkit-scrollbar{display:none}
@@ -207,7 +198,7 @@ function HomePage({ onEnterContents }) {
           <div style={{ fontSize:13, color:"#8B6A48", letterSpacing:"0.08em", marginBottom:14 }}>@maison_jenflox</div>
 
           <p style={{ fontSize:14, color:"rgba(242,235,224,0.5)", lineHeight:1.85, maxWidth:280, margin:"0 auto 20px", fontWeight:300 }}>
-            남성 패션 가성비 큐레이터<br/>
+            남성 패션 가성비 크리에이터<br/>
             <span style={{color:"#C8955A"}}>"느낌 좋은 템"</span> 추천 채널
           </p>
 
@@ -332,7 +323,7 @@ function HomePage({ onEnterContents }) {
                 젠플록스
               </div>
               <div style={{ fontSize:12.5, color:"rgba(242,235,224,0.45)", fontWeight:300 }}>
-                @jenflox · 남성 패션 가성비 큐레이터
+                @jenflox · 남성 패션 가성비 크리에이터
               </div>
             </div>
 
@@ -359,6 +350,92 @@ function HomePage({ onEnterContents }) {
             <span style={{ fontSize:11, color:"rgba(255,120,120,0.5)", letterSpacing:"0.05em" }}>▶</span>
             <span style={{ fontSize:11, color:"rgba(242,235,224,0.3)", fontWeight:300 }}>
               코디 조합법 · 아이템 추천 · 가성비 큐레이션
+            </span>
+          </div>
+        </div>
+
+        {/* 인스타그램 배너 */}
+        <div
+          onClick={() => window.open("https://instagram.com/maison_jenflox", "_blank")}
+          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 16px 48px rgba(193,53,132,0.22)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.55)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 4px 24px rgba(193,53,132,0.10)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.22)"; }}
+          style={{
+            marginTop:12, cursor:"pointer", borderRadius:20,
+            border:"1px solid rgba(193,53,132,0.22)",
+            background:"linear-gradient(135deg, rgba(193,53,132,0.10) 0%, rgba(30,8,20,0.80) 60%, rgba(15,10,6,0.95) 100%)",
+            boxShadow:"0 4px 24px rgba(193,53,132,0.10)",
+            overflow:"hidden", position:"relative",
+            transition:"all 0.25s ease",
+            animation:"fadeUp 0.45s 0.65s both",
+          }}
+        >
+          {/* 배경 글로우 */}
+          <div style={{
+            position:"absolute", top:-40, right:-40,
+            width:200, height:200, borderRadius:"50%",
+            background:"radial-gradient(circle, rgba(193,53,132,0.18) 0%, transparent 70%)",
+            pointerEvents:"none",
+          }}/>
+
+          <div style={{ padding:"24px 26px", display:"flex", alignItems:"center", gap:20 }}>
+            {/* 인스타 로고 SVG */}
+            <div style={{ flexShrink:0 }}>
+              <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="url(#ig_grad)"/>
+                <defs>
+                  <linearGradient id="ig_grad" x1="0" y1="52" x2="52" y2="0">
+                    <stop offset="0%" stopColor="#FFDC80"/>
+                    <stop offset="25%" stopColor="#FCAF45"/>
+                    <stop offset="50%" stopColor="#F77737"/>
+                    <stop offset="75%" stopColor="#C13584"/>
+                    <stop offset="100%" stopColor="#833AB4"/>
+                  </linearGradient>
+                </defs>
+                {/* 카메라 외곽 */}
+                <rect x="13" y="13" width="26" height="26" rx="7" stroke="white" strokeWidth="2.5" fill="none"/>
+                {/* 렌즈 */}
+                <circle cx="26" cy="26" r="7" stroke="white" strokeWidth="2.5" fill="none"/>
+                {/* 점 */}
+                <circle cx="35.5" cy="16.5" r="1.8" fill="white"/>
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:11, letterSpacing:"0.18em", color:"rgba(220,130,200,0.7)", textTransform:"uppercase", fontWeight:500, marginBottom:5 }}>
+                Instagram
+              </div>
+              <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", color:"#F2EBE0", marginBottom:4, lineHeight:1.2 }}>
+                maison_jenflox
+              </div>
+              <div style={{ fontSize:12.5, color:"rgba(242,235,224,0.45)", fontWeight:300 }}>
+                @maison_jenflox · 패션 · 스타일링
+              </div>
+            </div>
+
+            {/* 팔로우 버튼 */}
+            <div style={{
+              flexShrink:0,
+              padding:"8px 14px", borderRadius:999,
+              background:"linear-gradient(135deg,#C13584,#833AB4)",
+              color:"#fff", fontSize:12, fontWeight:700,
+              letterSpacing:"0.02em",
+              boxShadow:"0 4px 14px rgba(193,53,132,0.35)",
+            }}>
+              팔로우
+            </div>
+          </div>
+
+          {/* 하단 바 */}
+          <div style={{
+            borderTop:"1px solid rgba(193,53,132,0.12)",
+            padding:"10px 26px",
+            display:"flex", alignItems:"center", gap:6,
+            background:"rgba(0,0,0,0.15)",
+          }}>
+            <span style={{ fontSize:11, color:"rgba(220,130,200,0.5)" }}>📸</span>
+            <span style={{ fontSize:11, color:"rgba(242,235,224,0.3)", fontWeight:300 }}>
+              코디 · 스타일링 · 일상
             </span>
           </div>
         </div>
