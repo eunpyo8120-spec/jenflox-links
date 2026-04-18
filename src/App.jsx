@@ -1,6 +1,76 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-// ── 콘텐츠 데이터 ──────────────────────────────────────────
+// ── 팔레트 데이터 ─────────────────────────────────────────
+const PALETTE = [
+  { id:"all",    label:"전체",     bg:"#1B2D4F", blob:"#16253F" },
+  { id:"coord",  label:"코디조합", bg:"#F9E4A0", blob:"#F0D070" },
+  { id:"outer",  label:"아우터",   bg:"#A8D8B9", blob:"#7EC8A0" },
+  { id:"top",    label:"상의",     bg:"#F4B8C1", blob:"#EE9AAA" },
+  { id:"bottom", label:"하의/신발",bg:"#B8D0F0", blob:"#90B8E8" },
+  { id:"deal",   label:"특가꿀템", bg:"#A8E6E0", blob:"#78D4CC" },
+  { id:"season", label:"시즌/행사",bg:"#C8B8E8", blob:"#A898D0" },
+  { id:"age",    label:"나이대별", bg:"#F0C8A0", blob:"#E0A870" },
+  { id:"etc",    label:"기타",     bg:"#C8C8C8", blob:"#A8A8A8" },
+];
+
+const BLOBS = [
+  "M50,14 C72,6 90,22 87,47 C84,72 68,88 43,84 C18,80 5,62 8,38 C11,14 28,22 50,14Z",
+  "M48,12 C72,7 91,28 84,53 C77,78 56,90 32,81 C8,72 5,50 13,27 C21,4 24,17 48,12Z",
+  "M53,17 C76,9 89,32 82,56 C75,80 54,89 30,80 C6,71 7,47 15,26 C23,5 30,25 53,17Z",
+  "M45,11 C68,5 90,24 87,50 C84,76 63,91 38,84 C13,77 5,55 10,31 C15,7 22,17 45,11Z",
+  "M56,13 C79,7 92,30 85,55 C78,80 57,91 33,82 C9,73 6,51 14,28 C22,5 33,19 56,13Z",
+  "M49,11 C73,5 91,25 85,51 C79,77 57,89 33,82 C9,75 5,51 12,26 C19,1 25,17 49,11Z",
+  "M47,15 C71,7 90,27 83,53 C76,79 54,91 30,82 C6,73 5,49 13,26 C21,3 23,23 47,15Z",
+  "M54,12 C77,6 92,28 85,54 C78,80 56,90 32,81 C8,72 6,48 14,25 C22,2 31,18 54,12Z",
+  "M49,14 C73,6 91,26 84,52 C77,78 55,90 31,81 C7,72 5,48 13,25 C21,2 25,22 49,14Z",
+];
+
+function PaintBlob({ palette, isOn, onClick, size = 72, delay = 0 }) {
+  const idx = PALETTE.indexOf(palette);
+  const blobPath = BLOBS[idx % BLOBS.length];
+  const [hov, setHov] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const isAll = palette.id === "all";
+
+  function handleClick() {
+    setClicked(true);
+    setTimeout(() => setClicked(false), 350);
+    onClick();
+  }
+
+  return (
+    <button onClick={handleClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background:"none", border:"none", cursor:"pointer", padding:0,
+        width:size, height:size, position:"relative",
+        animation:`blobPopIn 0.5s ${delay}s cubic-bezier(0.34,1.56,0.64,1) both`,
+        transform: clicked ? "scale(0.86)" : isOn ? "scale(1.38)" : hov ? "scale(1.10)" : "scale(1)",
+        transition: clicked ? "transform 0.1s" : "transform 0.28s cubic-bezier(0.34,1.56,0.64,1)",
+        filter: "none",
+      }}
+    >
+      {clicked && (
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:palette.bg,
+          animation:"blobRipple 0.35s ease-out forwards", pointerEvents:"none", zIndex:10 }}/>
+      )}
+      <svg width={size} height={size} viewBox="0 0 100 100"
+        style={{ animation: isOn ? "blobWiggle 3s ease-in-out infinite" : "none" }}>
+        <path d={blobPath} fill={isAll && !isOn ? "#1B2D4F" : palette.bg}/>
+        {hov && !isOn && <path d={blobPath} fill="white" opacity="0.2"/>}
+        <text x="50" y="53" textAnchor="middle" dominantBaseline="middle"
+          style={{ fontSize: palette.label.length > 4 ? "10px" : "12px",
+            fontWeight:800, fill: isAll ? "#fff" : "#1B2D4F",
+            fontFamily:"'Pretendard',sans-serif", letterSpacing:"-0.5px" }}>
+          {palette.label}
+        </text>
+      </svg>
+    </button>
+  );
+}
+
+
 const CATEGORIES = [
   { id: "all",    label: "전체",      emoji: "✦" },
   { id: "coord",  label: "코디 조합법", emoji: "👗" },
@@ -76,9 +146,9 @@ const TAG_COLORS = {
 const MAIN_LINKS = [
   {
     id: "contents",
-    icon: "📋",
-    title: "콘텐츠 링크 모음",
-    desc: "코디 조합법, 아이템 추천, 나이대별 총정리 등",
+    icon: "🔍",
+    title: "아이템 검색",
+    desc: "팔레트 필터로 코디 조합, 추천 아이템 탐색",
     isInternal: true,
     accent: "#C8955A",
     bgAccent: "rgba(200,149,90,0.12)",
@@ -95,26 +165,6 @@ const MAIN_LINKS = [
     bgAccent: "rgba(232,160,64,0.10)",
     borderAccent: "rgba(232,160,64,0.28)",
     badge: "HOT",
-  },
-  {
-    id: "openchat",
-    icon: "💬",
-    title: "실시간 꿀템 공유 비밀공지방",
-    desc: "카카오톡 오픈채팅 · 꿀템 실시간 공유",
-    href: "https://open.kakao.com/o/g422DW1h",
-    accent: "#FFD700",
-    bgAccent: "rgba(255,215,0,0.07)",
-    borderAccent: "rgba(255,215,0,0.22)",
-  },
-  {
-    id: "fleamarket",
-    icon: "🛍️",
-    title: "4.11 플리마켓 전용공지방",
-    desc: "카카오톡 오픈채팅 · 플리마켓 전용",
-    href: "https://open.kakao.com/o/gDk4uRoi",
-    accent: "#C8955A",
-    bgAccent: "rgba(200,149,90,0.08)",
-    borderAccent: "rgba(200,149,90,0.22)",
   },
   {
     id: "shop",
@@ -138,18 +188,144 @@ const MAIN_LINKS = [
   },
 ];
 
+// ── 카카오톡 배너 (오픈채팅 선택 모달 포함) ──────────────
+function KakaoBanner() {
+  const [open, setOpen] = useState(false);
+
+  const rooms = [
+    { label:"실시간 꿀템 공유 비밀공지방", desc:"꿀템 실시간 공유", href:"https://open.kakao.com/o/g422DW1h" },
+    { label:"4.11 플리마켓 전용공지방",   desc:"플리마켓 전용",    href:"https://open.kakao.com/o/gDk4uRoi" },
+  ];
+
+  return (
+    <>
+      {/* 카카오 배너 */}
+      <div
+        onClick={() => setOpen(true)}
+        onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 14px 40px rgba(254,229,0,0.22)"; e.currentTarget.style.borderColor="rgba(254,229,0,0.6)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 3px 16px rgba(254,229,0,0.10)"; e.currentTarget.style.borderColor="rgba(254,229,0,0.25)"; }}
+        style={{
+          marginTop:12, cursor:"pointer", borderRadius:20,
+          border:"1.5px solid rgba(254,229,0,0.25)",
+          background:"linear-gradient(135deg,#FFFEF0 0%,#FFFDE0 40%,#FFFEF5 100%)",
+          boxShadow:"0 3px 16px rgba(254,229,0,0.10)",
+          overflow:"hidden", position:"relative",
+          transition:"all 0.25s ease",
+          animation:"fadeUp 0.45s 0.75s both",
+        }}
+      >
+        <div style={{ position:"absolute", top:-30, right:-30, width:160, height:160, borderRadius:"50%",
+          background:"radial-gradient(circle,rgba(254,229,0,0.12) 0%,transparent 70%)", pointerEvents:"none" }}/>
+
+        <div style={{ padding:"22px 24px", display:"flex", alignItems:"center", gap:18 }}>
+          {/* 카카오 로고 */}
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect width="48" height="48" rx="13" fill="#FEE500"/>
+            <path d="M24 10C16.268 10 10 14.925 10 21.012C10 24.875 12.494 28.294 16.312 30.369L14.75 36.5C14.7 36.7 14.912 36.869 15.087 36.756L22.362 31.912C22.9 31.969 23.444 32 24 32C31.732 32 38 27.075 38 21.012C38 14.925 31.732 10 24 10Z" fill="#3A1D1D"/>
+          </svg>
+
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:10, letterSpacing:"0.18em", color:"rgba(100,70,0,0.5)", textTransform:"uppercase", fontWeight:600, marginBottom:4 }}>KakaoTalk Open Chat</div>
+            <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.02em", color:"#2A1A00", marginBottom:3, lineHeight:1.2 }}>카카오 오픈채팅</div>
+            <div style={{ fontSize:12, color:"rgba(42,26,0,0.4)", fontWeight:300 }}>공지방 · 꿀템 공유 · 플리마켓</div>
+          </div>
+
+          <div style={{ flexShrink:0, padding:"7px 13px", borderRadius:999,
+            background:"#FEE500", color:"#3A1D1D", fontSize:12, fontWeight:700 }}>
+            입장 →
+          </div>
+        </div>
+
+        <div style={{ borderTop:"1px solid rgba(254,229,0,0.15)", padding:"9px 24px",
+          display:"flex", alignItems:"center", gap:6, background:"rgba(254,229,0,0.04)" }}>
+          <span style={{ fontSize:11, color:"rgba(42,26,0,0.3)", fontWeight:300 }}>💬 오픈채팅방 선택 후 입장</span>
+        </div>
+      </div>
+
+      {/* 선택 모달 */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position:"fixed", inset:0, zIndex:999,
+            background:"rgba(0,0,0,0.35)", backdropFilter:"blur(4px)",
+            display:"flex", alignItems:"flex-end", justifyContent:"center",
+            animation:"fadeIn 0.2s both",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width:"100%", maxWidth:480,
+              background:"#FFFDF7", borderRadius:"24px 24px 0 0",
+              padding:"28px 20px 40px",
+              animation:"slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
+            }}
+          >
+            {/* 핸들 바 */}
+            <div style={{ width:40, height:4, borderRadius:999, background:"rgba(184,144,42,0.2)", margin:"0 auto 24px" }}/>
+
+            <div style={{ fontSize:11, letterSpacing:"0.15em", color:"rgba(184,144,42,0.55)", textTransform:"uppercase", fontWeight:600, marginBottom:6 }}>KakaoTalk Open Chat</div>
+            <div style={{ fontSize:20, fontWeight:800, color:"#2A1A00", letterSpacing:"-0.03em", marginBottom:20 }}>입장할 채팅방을 선택하세요</div>
+
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {rooms.map((room, i) => (
+                <div key={i} onClick={() => { window.open(room.href, "_blank"); setOpen(false); }}
+                  style={{
+                    display:"flex", alignItems:"center", gap:14, padding:"16px 18px",
+                    background:"#FFF9E6", border:"1.5px solid rgba(254,229,0,0.3)",
+                    borderRadius:14, cursor:"pointer", transition:"all 0.18s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background="#FFF5CC"; e.currentTarget.style.borderColor="rgba(254,229,0,0.6)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background="#FFF9E6"; e.currentTarget.style.borderColor="rgba(254,229,0,0.3)"; }}
+                >
+                  <div style={{ width:40, height:40, borderRadius:12, background:"#FEE500",
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                    💬
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#2A1A00", marginBottom:2 }}>{room.label}</div>
+                    <div style={{ fontSize:12, color:"rgba(42,26,0,0.4)" }}>{room.desc}</div>
+                  </div>
+                  <span style={{ fontSize:16, color:"rgba(42,26,0,0.3)" }}>›</span>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => setOpen(false)} style={{
+              width:"100%", marginTop:16, padding:"13px",
+              border:"1.5px solid rgba(184,144,42,0.2)", borderRadius:12,
+              background:"transparent", color:"rgba(184,144,42,0.6)",
+              fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"inherit",
+            }}>닫기</button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { opacity:0; transform:translateY(40px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+      `}</style>
+    </>
+  );
+}
+
 // ── 공통 배경 Shell ───────────────────────────────────────
 function Shell({ children }) {
   return (
     <div style={{
-      minHeight:"100vh", background:"#0F0A06",
-      fontFamily:"'Pretendard','Noto Sans KR','Apple SD Gothic Neo',sans-serif",
-      color:"#F2EBE0", position:"relative", overflowX:"hidden",
+      minHeight:"100vh",
+      background:"#FFFDF7",
+      fontFamily:"'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif",
+      color:"#1A1208", position:"relative", overflowX:"hidden",
     }}>
+      {/* 골드 그레인 배경 */}
       <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
-        background:"radial-gradient(ellipse 70% 50% at 80% 10%,rgba(139,94,60,0.10) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 10% 90%,rgba(92,61,30,0.12) 0%,transparent 70%)",
+        background:"radial-gradient(ellipse 70% 50% at 75% 5%, rgba(212,175,55,0.10) 0%, transparent 65%), radial-gradient(ellipse 50% 40% at 15% 90%, rgba(184,144,30,0.08) 0%, transparent 65%)",
       }}/>
-      <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, opacity:0.03,
+      <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, opacity:0.025,
         backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         backgroundSize:"256px",
       }}/>
@@ -158,8 +334,35 @@ function Shell({ children }) {
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes blobPopIn {
+          0%   { opacity:0; transform:scale(0.6) translateY(8px); }
+          70%  { transform:scale(1.1) translateY(-2px); }
+          100% { opacity:1; transform:scale(1) translateY(0); }
+        }
+        @keyframes blobWiggle {
+          0%,100% { transform:scale(1) rotate(0deg); }
+          25%     { transform:scale(1.05) rotate(-2deg); }
+          75%     { transform:scale(1.03) rotate(2deg); }
+        }
+        @keyframes blobRipple {
+          0%   { transform:scale(0.8); opacity:0.5; }
+          100% { transform:scale(2.4); opacity:0; }
+        }
+        @keyframes threadSlide {
+          from { opacity:0; transform:translateX(-10px); }
+          to   { opacity:1; transform:translateX(0); }
+        }
+        @keyframes sidebarGrow {
+          from { transform:scaleY(0); }
+          to   { transform:scaleY(1); }
+        }
+        @keyframes badgePop {
+          0%   { transform:scale(0); opacity:0; }
+          65%  { transform:scale(1.18); }
+          100% { transform:scale(1); opacity:1; }
+        }
         ::-webkit-scrollbar{display:none}
-        input::placeholder{color:rgba(139,94,60,0.4)}
+        input::placeholder{color:rgba(180,144,60,0.45)}
         *{-webkit-tap-highlight-color:transparent; box-sizing:border-box;}
       `}</style>
     </div>
@@ -167,6 +370,10 @@ function Shell({ children }) {
 }
 
 // ── 메인 홈 페이지 ────────────────────────────────────────
+const GOLD = "#B8902A";
+const GOLD_LIGHT = "#F5E6B0";
+const NAVY_DARK = "#1B2D4F";
+
 function HomePage({ onEnterContents }) {
   const [hov, setHov] = useState(null);
 
@@ -175,42 +382,43 @@ function HomePage({ onEnterContents }) {
       <div style={{ maxWidth:480, margin:"0 auto", padding:"0 18px 80px" }}>
 
         {/* 프로필 */}
-        <div style={{ paddingTop:56, paddingBottom:40, textAlign:"center", animation:"fadeUp 0.5s both" }}>
+        <div style={{ paddingTop:52, paddingBottom:36, textAlign:"center", animation:"fadeUp 0.5s both" }}>
           <div style={{
             display:"inline-flex", alignItems:"center", justifyContent:"center",
             width:84, height:84, borderRadius:"50%", marginBottom:20,
-            background:"linear-gradient(135deg,#5C3D1E 0%,#8B5E3C 50%,#C8955A 100%)",
-            fontSize:34, boxShadow:"0 0 0 3px rgba(139,94,60,0.25),0 8px 32px rgba(92,61,30,0.4)",
+            background:"linear-gradient(135deg,#C8A020 0%,#E8C84A 50%,#F5E6A0 100%)",
+            fontSize:34,
+            boxShadow:"0 0 0 3px rgba(184,144,42,0.2), 0 8px 32px rgba(184,144,42,0.25)",
           }}>✦</div>
 
-          <div style={{ fontSize:11, letterSpacing:"0.25em", color:"#8B6A48", textTransform:"uppercase", marginBottom:10, fontWeight:500 }}>
+          <div style={{ fontSize:10, letterSpacing:"0.25em", color:"#B8902A", textTransform:"uppercase", marginBottom:10, fontWeight:700 }}>
             Men's Fashion Creator
           </div>
 
           <h1 style={{
             fontSize:"clamp(26px,7vw,34px)", fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 4px",
-            background:"linear-gradient(135deg,#F2EBE0 30%,#C8955A 100%)",
+            background:"linear-gradient(135deg,#1A1208 30%,#B8902A 100%)",
             WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", lineHeight:1.2,
           }}>
-            젠현표 <span style={{fontWeight:400,fontSize:"0.9em",opacity:0.5}}>·</span> 젠플록스
+            젠현표 <span style={{fontWeight:400,fontSize:"0.9em",opacity:0.35}}>·</span> 젠플록스
           </h1>
 
-          <div style={{ fontSize:13, color:"#8B6A48", letterSpacing:"0.08em", marginBottom:14 }}>@maison_jenflox</div>
+          <div style={{ fontSize:13, color:"#B8902A", letterSpacing:"0.08em", marginBottom:14, opacity:0.7 }}>@maison_jenflox</div>
 
-          <p style={{ fontSize:14, color:"rgba(242,235,224,0.5)", lineHeight:1.85, maxWidth:280, margin:"0 auto 20px", fontWeight:300 }}>
+          <p style={{ fontSize:14, color:"rgba(26,18,8,0.45)", lineHeight:1.85, maxWidth:280, margin:"0 auto 20px", fontWeight:300 }}>
             남성 패션 가성비 크리에이터<br/>
-            <span style={{color:"#C8955A"}}>"느낌 좋은 템"</span> 추천 채널
+            <span style={{color:"#B8902A", fontWeight:600}}>"느낌 좋은 템"</span> 추천 채널
           </p>
 
           <div style={{ display:"flex", alignItems:"center", gap:12, maxWidth:180, margin:"0 auto" }}>
-            <div style={{ flex:1, height:1, background:"linear-gradient(to right,transparent,rgba(139,94,60,0.4))" }}/>
-            <span style={{ color:"#5C3D1E", fontSize:12 }}>✦</span>
-            <div style={{ flex:1, height:1, background:"linear-gradient(to left,transparent,rgba(139,94,60,0.4))" }}/>
+            <div style={{ flex:1, height:1, background:"linear-gradient(to right,transparent,rgba(184,144,42,0.3))" }}/>
+            <span style={{ color:"#D4A830", fontSize:12 }}>✦</span>
+            <div style={{ flex:1, height:1, background:"linear-gradient(to left,transparent,rgba(184,144,42,0.3))" }}/>
           </div>
         </div>
 
         {/* 링크 카드 */}
-        <div style={{ display:"flex", flexDirection:"column", gap:11 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           {MAIN_LINKS.map((link, i) => {
             const isHov     = hov === link.id;
             const isSpecial = link.id === "contents";
@@ -224,53 +432,54 @@ function HomePage({ onEnterContents }) {
                   display:"flex", alignItems:"center", gap:15,
                   padding: isSpecial ? "20px 22px" : "15px 19px",
                   background: isHov
-                    ? (isSpecial ? "rgba(200,149,90,0.18)" : "rgba(92,61,30,0.18)")
-                    : (isSpecial ? link.bgAccent : "rgba(92,61,30,0.09)"),
-                  border:`1px solid ${isHov ? link.borderAccent : (isSpecial ? "rgba(200,149,90,0.25)" : "rgba(139,94,60,0.14)")}`,
+                    ? (isSpecial ? "rgba(184,144,42,0.12)" : "rgba(184,144,42,0.07)")
+                    : (isSpecial ? "rgba(245,230,176,0.35)" : "#fff"),
+                  border:`1.5px solid ${isHov
+                    ? (isSpecial ? "rgba(184,144,42,0.5)" : "rgba(184,144,42,0.3)")
+                    : (isSpecial ? "rgba(184,144,42,0.35)" : "rgba(184,144,42,0.15)")}`,
                   borderRadius: isSpecial ? 18 : 14,
                   cursor:"pointer", transition:"all 0.22s ease",
                   transform: isHov ? "translateY(-3px)" : "none",
-                  boxShadow: isHov ? "0 10px 28px rgba(92,61,30,0.22)" : (isSpecial ? "0 2px 14px rgba(200,149,90,0.07)" : "none"),
+                  boxShadow: isHov
+                    ? "0 10px 28px rgba(184,144,42,0.15)"
+                    : (isSpecial ? "0 2px 14px rgba(184,144,42,0.08)" : "0 1px 4px rgba(0,0,0,0.04)"),
                   animation:`fadeUp 0.45s ${0.05+i*0.06}s both`,
                 }}
               >
-                {/* 아이콘 */}
                 <div style={{
                   width: isSpecial ? 48 : 42, height: isSpecial ? 48 : 42,
                   borderRadius: isSpecial ? 14 : 12,
-                  background: link.bgAccent, border:`1px solid ${link.borderAccent}`,
+                  background: isSpecial ? "rgba(184,144,42,0.15)" : "rgba(184,144,42,0.08)",
+                  border:`1px solid rgba(184,144,42,0.2)`,
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize: isSpecial ? 22 : 18, flexShrink:0, color:link.accent,
+                  fontSize: isSpecial ? 22 : 18, flexShrink:0,
                 }}>
                   {link.icon}
                 </div>
 
-                {/* 텍스트 */}
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{
                     fontSize: isSpecial ? 15.5 : 14,
                     fontWeight: isSpecial ? 700 : 600,
-                    color: isHov ? "#F2EBE0" : "#D9CFC3",
+                    color: isHov ? "#1A1208" : "#2A1E08",
                     marginBottom:2, letterSpacing:"-0.01em", transition:"color 0.2s",
                   }}>{link.title}</div>
-                  <div style={{ fontSize:12, color:"rgba(242,235,224,0.35)", fontWeight:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  <div style={{ fontSize:12, color:"rgba(26,18,8,0.38)", fontWeight:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                     {link.desc}
                   </div>
                 </div>
 
-                {/* 배지 */}
                 {link.badge && (
                   <div style={{
                     padding:"3px 9px", borderRadius:999, flexShrink:0,
-                    background: link.id==="contents" ? "rgba(200,149,90,0.2)" : "rgba(232,160,64,0.18)",
-                    border:`1px solid ${link.id==="contents" ? "rgba(200,149,90,0.35)" : "rgba(232,160,64,0.35)"}`,
-                    color:link.accent, fontSize:11, fontWeight:600, letterSpacing:"0.03em",
+                    background: link.id==="contents" ? "rgba(184,144,42,0.15)" : "rgba(184,144,42,0.12)",
+                    border:`1px solid rgba(184,144,42,0.3)`,
+                    color:"#B8902A", fontSize:11, fontWeight:700,
                   }}>{link.badge}</div>
                 )}
 
-                {/* 화살표 */}
                 <div style={{
-                  color: isHov ? link.accent : "rgba(139,94,60,0.35)",
+                  color: isHov ? "#B8902A" : "rgba(184,144,42,0.4)",
                   fontSize:17, transition:"all 0.2s", flexShrink:0,
                   transform: isHov ? "translate(2px,-2px)" : "none",
                 }}>
@@ -283,165 +492,103 @@ function HomePage({ onEnterContents }) {
 
         {/* 유튜브 배너 */}
         <div
-          onClick={() => window.open("https://www.youtube.com/@jenflox", "_blank")}
-          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 16px 48px rgba(255,0,0,0.22)"; e.currentTarget.style.borderColor="rgba(255,68,68,0.55)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 4px 24px rgba(255,0,0,0.10)"; e.currentTarget.style.borderColor="rgba(255,68,68,0.22)"; }}
+          onClick={() => window.open("https://www.youtube.com/@maison_jenflox", "_blank")}
+          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 14px 40px rgba(255,0,0,0.18)"; e.currentTarget.style.borderColor="rgba(255,68,68,0.5)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 3px 16px rgba(255,0,0,0.08)"; e.currentTarget.style.borderColor="rgba(255,68,68,0.18)"; }}
           style={{
-            marginTop:20, cursor:"pointer", borderRadius:20,
-            border:"1px solid rgba(255,68,68,0.22)",
-            background:"linear-gradient(135deg, rgba(255,0,0,0.10) 0%, rgba(30,8,8,0.80) 60%, rgba(15,10,6,0.95) 100%)",
-            boxShadow:"0 4px 24px rgba(255,0,0,0.10)",
+            marginTop:18, cursor:"pointer", borderRadius:20,
+            border:"1.5px solid rgba(255,68,68,0.18)",
+            background:"linear-gradient(135deg,#FFF5F5 0%,#FFF0F0 40%,#FFF8F8 100%)",
+            boxShadow:"0 3px 16px rgba(255,0,0,0.08)",
             overflow:"hidden", position:"relative",
             transition:"all 0.25s ease",
             animation:"fadeUp 0.45s 0.55s both",
           }}
         >
-          {/* 배경 글로우 */}
-          <div style={{
-            position:"absolute", top:-40, right:-40,
-            width:200, height:200, borderRadius:"50%",
-            background:"radial-gradient(circle, rgba(255,0,0,0.18) 0%, transparent 70%)",
-            pointerEvents:"none",
-          }}/>
+          <div style={{ position:"absolute", top:-30, right:-30, width:160, height:160, borderRadius:"50%",
+            background:"radial-gradient(circle,rgba(255,0,0,0.08) 0%,transparent 70%)", pointerEvents:"none" }}/>
 
-          <div style={{ padding:"24px 26px", display:"flex", alignItems:"center", gap:20 }}>
-            {/* 유튜브 로고 SVG */}
-            <div style={{ flexShrink:0 }}>
-              <svg width="62" height="44" viewBox="0 0 62 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="62" height="44" rx="12" fill="#FF0000"/>
-                {/* 재생 삼각형 */}
-                <polygon points="25,13 25,31 43,22" fill="white"/>
-              </svg>
-            </div>
-
-            {/* 텍스트 */}
+          <div style={{ padding:"22px 24px", display:"flex", alignItems:"center", gap:18 }}>
+            <svg width="58" height="41" viewBox="0 0 58 41" fill="none">
+              <rect width="58" height="41" rx="11" fill="#FF0000"/>
+              <polygon points="23,12 23,29 40,20.5" fill="white"/>
+            </svg>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11, letterSpacing:"0.18em", color:"rgba(255,120,120,0.7)", textTransform:"uppercase", fontWeight:500, marginBottom:5 }}>
-                YouTube Channel
-              </div>
-              <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", color:"#F2EBE0", marginBottom:4, lineHeight:1.2 }}>
-                젠플록스
-              </div>
-              <div style={{ fontSize:12.5, color:"rgba(242,235,224,0.45)", fontWeight:300 }}>
-                @jenflox · 남성 패션 가성비 크리에이터
-              </div>
+              <div style={{ fontSize:10, letterSpacing:"0.18em", color:"rgba(255,80,80,0.6)", textTransform:"uppercase", fontWeight:600, marginBottom:4 }}>YouTube Channel</div>
+              <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.02em", color:"#1A0808", marginBottom:3, lineHeight:1.2 }}>젠플록스</div>
+              <div style={{ fontSize:12, color:"rgba(26,8,8,0.4)", fontWeight:300 }}>@maison_jenflox · 남성 패션 크리에이터</div>
             </div>
-
-            {/* 구독 버튼 느낌 */}
-            <div style={{
-              flexShrink:0,
-              padding:"8px 14px", borderRadius:999,
-              background:"#FF0000",
-              color:"#fff", fontSize:12, fontWeight:700,
-              letterSpacing:"0.02em",
-              boxShadow:"0 4px 14px rgba(255,0,0,0.35)",
-            }}>
+            <div style={{ flexShrink:0, padding:"7px 13px", borderRadius:999, background:"#FF0000",
+              color:"#fff", fontSize:12, fontWeight:700, boxShadow:"0 3px 10px rgba(255,0,0,0.3)" }}>
               구독 ▶
             </div>
           </div>
 
-          {/* 하단 구독자 수 바 */}
-          <div style={{
-            borderTop:"1px solid rgba(255,68,68,0.12)",
-            padding:"10px 26px",
-            display:"flex", alignItems:"center", gap:6,
-            background:"rgba(0,0,0,0.15)",
-          }}>
-            <span style={{ fontSize:11, color:"rgba(255,120,120,0.5)", letterSpacing:"0.05em" }}>▶</span>
-            <span style={{ fontSize:11, color:"rgba(242,235,224,0.3)", fontWeight:300 }}>
-              코디 조합법 · 아이템 추천 · 가성비 큐레이션
-            </span>
+          <div style={{ borderTop:"1px solid rgba(255,68,68,0.08)", padding:"9px 24px",
+            display:"flex", alignItems:"center", gap:6, background:"rgba(255,0,0,0.02)" }}>
+            <span style={{ fontSize:10, color:"rgba(255,80,80,0.4)" }}>▶</span>
+            <span style={{ fontSize:11, color:"rgba(26,8,8,0.3)", fontWeight:300 }}>코디 조합법 · 아이템 추천 · 가성비 큐레이션</span>
           </div>
         </div>
 
-        {/* 인스타그램 배너 */}
+        {/* 인스타 배너 */}
         <div
-          onClick={() => window.open("https://instagram.com/maison_jenflox", "_blank")}
-          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 16px 48px rgba(193,53,132,0.22)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.55)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 4px 24px rgba(193,53,132,0.10)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.22)"; }}
+          onClick={() => window.open("https://www.instagram.com/maison_jenflox", "_blank")}
+          onMouseEnter={e => { e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.boxShadow="0 14px 40px rgba(193,53,132,0.16)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.45)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 3px 16px rgba(193,53,132,0.07)"; e.currentTarget.style.borderColor="rgba(193,53,132,0.18)"; }}
           style={{
             marginTop:12, cursor:"pointer", borderRadius:20,
-            border:"1px solid rgba(193,53,132,0.22)",
-            background:"linear-gradient(135deg, rgba(193,53,132,0.10) 0%, rgba(30,8,20,0.80) 60%, rgba(15,10,6,0.95) 100%)",
-            boxShadow:"0 4px 24px rgba(193,53,132,0.10)",
+            border:"1.5px solid rgba(193,53,132,0.18)",
+            background:"linear-gradient(135deg,#FFF5FC 0%,#FFF0F8 40%,#FFF5FA 100%)",
+            boxShadow:"0 3px 16px rgba(193,53,132,0.07)",
             overflow:"hidden", position:"relative",
             transition:"all 0.25s ease",
             animation:"fadeUp 0.45s 0.65s both",
           }}
         >
-          {/* 배경 글로우 */}
-          <div style={{
-            position:"absolute", top:-40, right:-40,
-            width:200, height:200, borderRadius:"50%",
-            background:"radial-gradient(circle, rgba(193,53,132,0.18) 0%, transparent 70%)",
-            pointerEvents:"none",
-          }}/>
+          <div style={{ position:"absolute", top:-30, right:-30, width:160, height:160, borderRadius:"50%",
+            background:"radial-gradient(circle,rgba(193,53,132,0.07) 0%,transparent 70%)", pointerEvents:"none" }}/>
 
-          <div style={{ padding:"24px 26px", display:"flex", alignItems:"center", gap:20 }}>
-            {/* 인스타 로고 SVG */}
-            <div style={{ flexShrink:0 }}>
-              <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="52" height="52" rx="14" fill="url(#ig_grad)"/>
-                <defs>
-                  <linearGradient id="ig_grad" x1="0" y1="52" x2="52" y2="0">
-                    <stop offset="0%" stopColor="#FFDC80"/>
-                    <stop offset="25%" stopColor="#FCAF45"/>
-                    <stop offset="50%" stopColor="#F77737"/>
-                    <stop offset="75%" stopColor="#C13584"/>
-                    <stop offset="100%" stopColor="#833AB4"/>
-                  </linearGradient>
-                </defs>
-                {/* 카메라 외곽 */}
-                <rect x="13" y="13" width="26" height="26" rx="7" stroke="white" strokeWidth="2.5" fill="none"/>
-                {/* 렌즈 */}
-                <circle cx="26" cy="26" r="7" stroke="white" strokeWidth="2.5" fill="none"/>
-                {/* 점 */}
-                <circle cx="35.5" cy="16.5" r="1.8" fill="white"/>
-              </svg>
-            </div>
-
-            {/* 텍스트 */}
+          <div style={{ padding:"22px 24px", display:"flex", alignItems:"center", gap:18 }}>
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect width="48" height="48" rx="13" fill="url(#ig_home)"/>
+              <defs>
+                <linearGradient id="ig_home" x1="0" y1="48" x2="48" y2="0">
+                  <stop offset="0%" stopColor="#FFDC80"/>
+                  <stop offset="25%" stopColor="#FCAF45"/>
+                  <stop offset="50%" stopColor="#F77737"/>
+                  <stop offset="75%" stopColor="#C13584"/>
+                  <stop offset="100%" stopColor="#833AB4"/>
+                </linearGradient>
+              </defs>
+              <rect x="12" y="12" width="24" height="24" rx="6.5" stroke="white" strokeWidth="2.2" fill="none"/>
+              <circle cx="24" cy="24" r="6.5" stroke="white" strokeWidth="2.2" fill="none"/>
+              <circle cx="32" cy="16" r="1.6" fill="white"/>
+            </svg>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11, letterSpacing:"0.18em", color:"rgba(220,130,200,0.7)", textTransform:"uppercase", fontWeight:500, marginBottom:5 }}>
-                Instagram
-              </div>
-              <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.02em", color:"#F2EBE0", marginBottom:4, lineHeight:1.2 }}>
-                maison_jenflox
-              </div>
-              <div style={{ fontSize:12.5, color:"rgba(242,235,224,0.45)", fontWeight:300 }}>
-                @maison_jenflox · 패션 · 스타일링
-              </div>
+              <div style={{ fontSize:10, letterSpacing:"0.18em", color:"rgba(193,53,132,0.55)", textTransform:"uppercase", fontWeight:600, marginBottom:4 }}>Instagram</div>
+              <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.02em", color:"#1A0814", marginBottom:3, lineHeight:1.2 }}>maison_jenflox</div>
+              <div style={{ fontSize:12, color:"rgba(26,8,20,0.4)", fontWeight:300 }}>@maison_jenflox · 패션 · 스타일링</div>
             </div>
-
-            {/* 팔로우 버튼 */}
-            <div style={{
-              flexShrink:0,
-              padding:"8px 14px", borderRadius:999,
+            <div style={{ flexShrink:0, padding:"7px 13px", borderRadius:999,
               background:"linear-gradient(135deg,#C13584,#833AB4)",
-              color:"#fff", fontSize:12, fontWeight:700,
-              letterSpacing:"0.02em",
-              boxShadow:"0 4px 14px rgba(193,53,132,0.35)",
-            }}>
+              color:"#fff", fontSize:12, fontWeight:700, boxShadow:"0 3px 10px rgba(193,53,132,0.28)" }}>
               팔로우
             </div>
           </div>
 
-          {/* 하단 바 */}
-          <div style={{
-            borderTop:"1px solid rgba(193,53,132,0.12)",
-            padding:"10px 26px",
-            display:"flex", alignItems:"center", gap:6,
-            background:"rgba(0,0,0,0.15)",
-          }}>
-            <span style={{ fontSize:11, color:"rgba(220,130,200,0.5)" }}>📸</span>
-            <span style={{ fontSize:11, color:"rgba(242,235,224,0.3)", fontWeight:300 }}>
-              코디 · 스타일링 · 일상
-            </span>
+          <div style={{ borderTop:"1px solid rgba(193,53,132,0.07)", padding:"9px 24px",
+            display:"flex", alignItems:"center", gap:6, background:"rgba(193,53,132,0.02)" }}>
+            <span style={{ fontSize:10, color:"rgba(193,53,132,0.35)" }}>📸</span>
+            <span style={{ fontSize:11, color:"rgba(26,8,20,0.3)", fontWeight:300 }}>코디 · 스타일링 · 일상</span>
           </div>
         </div>
 
+        {/* 카카오톡 배너 */}
+        <KakaoBanner />
+
         {/* 푸터 */}
-        <div style={{ textAlign:"center", marginTop:44, fontSize:12, color:"rgba(139,94,60,0.3)", lineHeight:2.2 }}>
+        <div style={{ textAlign:"center", marginTop:44, fontSize:12, color:"rgba(184,144,42,0.35)", lineHeight:2.2 }}>
           <div style={{ fontSize:16, marginBottom:6 }}>✦</div>
           젠플록스(jenflox)
         </div>
@@ -450,129 +597,224 @@ function HomePage({ onEnterContents }) {
   );
 }
 
-// ── 콘텐츠 목록 페이지 ────────────────────────────────────
+// ── 콘텐츠 목록 페이지 (팔레트 필터 + 검색 + 스레드 피드) ──
 function ContentsPage({ onBack }) {
-  const [active,  setActive]  = useState("all");
-  const [search,  setSearch]  = useState("");
-  const [hov,     setHov]     = useState(null);
+  const [selected, setSelected] = useState(["all"]);
+  const [search,   setSearch]   = useState("");
+  const [hov,      setHov]      = useState(null);
+  const [sFocus,   setSFocus]   = useState(false);
 
-  const filtered = ITEMS.filter(item => {
-    const matchCat    = active === "all" || item.cat === active;
-    const matchSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-                        item.desc.toLowerCase().includes(search.toLowerCase());
+  function togglePalette(id) {
+    if (id === "all") { setSelected(["all"]); return; }
+    setSelected(prev => {
+      const next = prev.filter(x => x !== "all");
+      if (next.includes(id)) {
+        const after = next.filter(x => x !== id);
+        return after.length ? after : ["all"];
+      }
+      return [...next, id];
+    });
+  }
+
+  const filtered = useMemo(() => ITEMS.filter(item => {
+    const matchCat    = selected.includes("all") || selected.includes(item.cat);
+    const matchSearch = item.title.includes(search) || item.desc.includes(search);
     return matchCat && matchSearch;
-  });
+  }), [selected, search]);
+
+  const isFiltered  = !selected.includes("all") || !!search;
+  const activePals  = PALETTE.filter(p => selected.includes(p.id));
+  const cats        = PALETTE.slice(1);
+  const CENTER      = 160;
+  const CIRCLE_R    = 100;
 
   return (
     <Shell>
-      <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px 80px" }}>
+      <div style={{ maxWidth:480, margin:"0 auto", padding:"0 0 80px" }}>
 
-        {/* 헤더 */}
-        <div style={{ padding:"24px 0 20px", display:"flex", alignItems:"center", gap:14, animation:"fadeIn 0.3s both" }}>
-          <button
-            onClick={onBack}
-            style={{
-              display:"flex", alignItems:"center", justifyContent:"center",
-              width:38, height:38, borderRadius:11,
-              background:"rgba(92,61,30,0.12)", border:"1px solid rgba(139,94,60,0.2)",
-              color:"#C8955A", fontSize:20, cursor:"pointer", transition:"all 0.2s", flexShrink:0,
-            }}
-            onMouseEnter={e=>{e.currentTarget.style.background="rgba(92,61,30,0.22)";e.currentTarget.style.borderColor="rgba(139,94,60,0.4)"}}
-            onMouseLeave={e=>{e.currentTarget.style.background="rgba(92,61,30,0.12)";e.currentTarget.style.borderColor="rgba(139,94,60,0.2)"}}
+        {/* ── 헤더 ── */}
+        <div style={{ padding:"22px 20px 16px", display:"flex", alignItems:"center", gap:14, animation:"fadeIn 0.3s both" }}>
+          <button onClick={onBack} style={{
+            display:"flex", alignItems:"center", justifyContent:"center",
+            width:38, height:38, borderRadius:11,
+            background:"rgba(184,144,42,0.10)", border:"1px solid rgba(184,144,42,0.25)",
+            color:"#B8902A", fontSize:20, cursor:"pointer", transition:"all 0.2s", flexShrink:0,
+          }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(184,144,42,0.18)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(184,144,42,0.10)";}}
           >‹</button>
           <div>
-            <div style={{ fontSize:17, fontWeight:700, letterSpacing:"-0.02em", color:"#D9CFC3" }}>콘텐츠 링크 모음</div>
-            <div style={{ fontSize:12, color:"rgba(242,235,224,0.33)", fontWeight:300 }}>젠플록스 큐레이션 전체보기</div>
+            <div style={{ fontSize:16, fontWeight:700, letterSpacing:"-0.02em", color:"#1A1208" }}>아이템 검색</div>
+            <div style={{ fontSize:11, color:"rgba(184,144,42,0.55)", fontWeight:400 }}>물감을 눌러 카테고리 탐색</div>
           </div>
         </div>
 
-        {/* 검색 */}
-        <div style={{ marginBottom:16, position:"relative" }}>
-          <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:14, opacity:0.35, pointerEvents:"none" }}>🔍</div>
-          <input
-            value={search} onChange={e=>setSearch(e.target.value)} placeholder="콘텐츠 검색..."
-            style={{
-              width:"100%", background:"rgba(92,61,30,0.10)", border:"1px solid rgba(139,94,60,0.18)",
-              borderRadius:12, padding:"12px 14px 12px 40px",
-              color:"#F2EBE0", fontSize:14, outline:"none", transition:"border-color 0.2s",
-            }}
-            onFocus={e=>e.target.style.borderColor="rgba(139,94,60,0.45)"}
-            onBlur={e=>e.target.style.borderColor="rgba(139,94,60,0.18)"}
-          />
+        {/* ── 팔레트 원 ── */}
+        <div style={{ padding:"8px 20px 20px" }}>
+          <div style={{ display:"flex", justifyContent:"center" }}>
+            <div style={{ position:"relative", width:320, height:320 }}>
+
+              {/* 트레이 배경 SVG */}
+              <svg width="320" height="320" style={{ position:"absolute", top:0, left:0, pointerEvents:"none" }}>
+                {/* 바깥 테두리 원만 */}
+                <circle cx="160" cy="160" r="154" fill="rgba(184,144,42,0.04)" stroke="rgba(184,144,42,0.2)" strokeWidth="1.5"/>
+              </svg>
+
+              {/* 중앙 전체 */}
+              <div style={{ position:"absolute", left:"50%", top:"50%", transform:"translate(-50%,-50%)", zIndex:2 }}>
+                <PaintBlob palette={PALETTE[0]} isOn={selected.includes("all")} onClick={()=>togglePalette("all")} size={68} delay={0}/>
+              </div>
+
+              {/* 8개 카테고리 - 중앙 가깝게 */}
+              {[
+                {x:160,y:62},{x:245,y:95},{x:278,y:166},{x:242,y:240},
+                {x:160,y:272},{x:80,y:240},{x:44,y:166},{x:78,y:95},
+              ].map((pos, i) => (
+                <div key={cats[i].id} style={{ position:"absolute", left:pos.x-34, top:pos.y-34, zIndex:1 }}>
+                  <PaintBlob palette={cats[i]} isOn={selected.includes(cats[i].id)}
+                    onClick={()=>togglePalette(cats[i].id)} size={68} delay={0.06+i*0.07}/>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 선택 태그 */}
+          {!selected.includes("all") && (
+            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:14, justifyContent:"center" }}>
+              {activePals.map(p => (
+                <button key={p.id} onClick={()=>togglePalette(p.id)} style={{
+                  display:"flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:999,
+                  background:p.bg, border:"1.5px solid rgba(27,45,79,0.2)",
+                  fontSize:11, fontWeight:700, color:"#1B2D4F", cursor:"pointer", fontFamily:"inherit",
+                }}>{p.label} ×</button>
+              ))}
+              <button onClick={()=>setSelected(["all"])} style={{
+                padding:"4px 10px", borderRadius:999, border:"1px solid rgba(184,144,42,0.25)",
+                background:"rgba(184,144,42,0.06)", fontSize:11, color:"rgba(184,144,42,0.6)",
+                cursor:"pointer", fontFamily:"inherit",
+              }}>전체보기</button>
+            </div>
+          )}
         </div>
 
-        {/* 탭 */}
-        <div style={{ display:"flex", gap:7, overflowX:"auto", paddingBottom:4, marginBottom:22, scrollbarWidth:"none", WebkitOverflowScrolling:"touch" }}>
-          {CATEGORIES.map(cat => {
-            const on = active === cat.id;
-            return (
-              <button key={cat.id} onClick={()=>setActive(cat.id)} style={{
-                flexShrink:0, padding:"7px 13px", borderRadius:999,
-                border: on ? "1px solid rgba(200,149,90,0.55)" : "1px solid rgba(139,94,60,0.16)",
-                background: on ? "linear-gradient(135deg,#5C3D1E,#8B5E3C)" : "rgba(92,61,30,0.07)",
-                color: on ? "#F2EBE0" : "#8B6A48", fontSize:12, fontWeight: on ? 600 : 400,
-                cursor:"pointer", transition:"all 0.2s", whiteSpace:"nowrap",
-                boxShadow: on ? "0 4px 14px rgba(92,61,30,0.3)" : "none",
-              }}>
-                {cat.emoji} {cat.label}
+        {/* ── 검색창 (sticky) ── */}
+        <div style={{
+          position:"sticky", top:0, zIndex:100,
+          background:"rgba(255,253,247,0.95)", backdropFilter:"blur(12px)",
+          padding:"10px 20px 8px",
+          borderBottom:"1px solid rgba(184,144,42,0.12)",
+          boxShadow: sFocus ? "0 4px 20px rgba(184,144,42,0.10)" : "0 2px 8px rgba(0,0,0,0.04)",
+          transition:"box-shadow 0.2s",
+        }}>
+          <div style={{
+            display:"flex", alignItems:"center", gap:10,
+            border:`1.5px solid ${sFocus ? "rgba(184,144,42,0.5)" : "rgba(184,144,42,0.2)"}`,
+            borderRadius:10, padding:"9px 13px", transition:"border-color 0.2s",
+            background: sFocus ? "#fff" : "rgba(184,144,42,0.04)",
+          }}>
+            <svg width="14" height="14" fill="none" stroke={sFocus?"#B8902A":"rgba(184,144,42,0.4)"} strokeWidth="2" viewBox="0 0 24 24" style={{flexShrink:0}}>
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input value={search} onChange={e=>setSearch(e.target.value)}
+              onFocus={()=>setSFocus(true)} onBlur={()=>setSFocus(false)}
+              placeholder="아이템 검색..."
+              style={{ flex:1, border:"none", fontSize:13.5, color:"#1A1208", fontFamily:"inherit", background:"transparent" }}
+            />
+            {search && <button onClick={()=>setSearch("")} style={{ border:"none", background:"none", cursor:"pointer", color:"rgba(184,144,42,0.5)", fontSize:18, padding:0 }}>×</button>}
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:7 }}>
+            <span style={{ fontSize:11, color: isFiltered ? "#B8902A" : "rgba(184,144,42,0.45)", fontWeight: isFiltered ? 700 : 400 }}>
+              {isFiltered ? `필터 적용 · ${filtered.length}개` : `총 ${ITEMS.length}개`}
+            </span>
+            {isFiltered && (
+              <button onClick={()=>{setSelected(["all"]);setSearch("");}}
+                style={{ fontSize:11, color:"rgba(184,144,42,0.5)", border:"none", background:"none", cursor:"pointer", fontFamily:"inherit" }}>
+                초기화 ×
               </button>
-            );
-          })}
+            )}
+          </div>
         </div>
 
-        {/* 결과 수 */}
-        <div style={{ fontSize:12, color:"#6B5040", marginBottom:14, letterSpacing:"0.04em" }}>{filtered.length}개의 콘텐츠</div>
-
-        {/* 카드 그리드 */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(100%,300px),1fr))", gap:11 }}>
-          {filtered.map((item, i) => {
-            const ts  = TAG_COLORS[item.tag] || TAG_COLORS["기타/정보"];
-            const isH = hov === item.id;
+        {/* ── 스레드 피드 ── */}
+        <div style={{ padding:"8px 0" }}>
+          {filtered.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"60px 20px", animation:"fadeUp 0.4s both" }}>
+              <div style={{ fontSize:34, marginBottom:10 }}>😢</div>
+              <div style={{ fontSize:14, fontWeight:700, color:"rgba(242,235,224,0.6)" }}>해당하는 아이템이 없어요</div>
+              <div style={{ fontSize:12, color:"rgba(139,94,60,0.4)", marginTop:6 }}>다른 물감을 눌러보세요</div>
+            </div>
+          ) : filtered.map((item, i) => {
+            const pal     = PALETTE.find(p => p.id === item.cat);
+            const isH     = hov === item.id;
+            const hasLink = item.href !== "#";
+            const delay   = `${Math.min(i*0.03, 0.4)}s`;
             return (
-              <a key={item.id} href={item.href} target="_blank" rel="noopener noreferrer"
-                onMouseEnter={()=>setHov(item.id)} onMouseLeave={()=>setHov(null)}
+              <div key={item.id}
+                onClick={() => hasLink && window.open(item.href, "_blank")}
+                onMouseEnter={() => setHov(item.id)}
+                onMouseLeave={() => setHov(null)}
                 style={{
-                  display:"flex", flexDirection:"column", gap:9, padding:"17px 19px",
-                  background: isH ? "rgba(92,61,30,0.20)" : "rgba(92,61,30,0.09)",
-                  border:`1px solid ${isH ? "rgba(139,94,60,0.42)" : "rgba(139,94,60,0.13)"}`,
-                  borderRadius:15, textDecoration:"none", color:"inherit", cursor:"pointer",
-                  transition:"all 0.22s ease",
-                  transform: isH ? "translateY(-3px)" : "none",
-                  boxShadow: isH ? "0 10px 28px rgba(92,61,30,0.22)" : "none",
-                  animation:`fadeUp 0.4s ${Math.min(i*0.04,0.4)}s both`,
+                  display:"flex", alignItems:"stretch",
+                  borderBottom:"1px solid rgba(184,144,42,0.10)",
+                  cursor: hasLink ? "pointer" : "default",
+                  background: isH ? "rgba(184,144,42,0.05)" : "transparent",
+                  transform: isH ? "translateX(4px)" : "translateX(0)",
+                  boxShadow: isH ? `-4px 0 0 ${pal?.bg||"#B8902A"}` : "none",
+                  transition:"background 0.18s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s",
+                  animation:`threadSlide 0.32s ${delay} ease both`,
                 }}
               >
+                {/* 컬러 사이드바 */}
                 <div style={{
-                  display:"inline-flex", alignItems:"center", alignSelf:"flex-start",
-                  padding:"3px 9px", borderRadius:999,
-                  background:ts.bg, border:`1px solid ${ts.border}`,
-                  color:ts.text, fontSize:11, fontWeight:500, letterSpacing:"0.03em",
-                }}>
-                  {CATEGORIES.find(c=>c.id===item.cat)?.emoji} {item.tag}
+                  width: isH ? 5 : 3, flexShrink:0,
+                  background: pal?.bg || "#B8902A",
+                  opacity: isH ? 1 : 0.5,
+                  transition:"width 0.2s, opacity 0.2s",
+                  transformOrigin:"top",
+                  animation:`sidebarGrow 0.35s ${delay} ease both`,
+                }}/>
+
+                <div style={{ flex:1, padding:"15px 18px" }}>
+                  {/* 뱃지 + 화살표 */}
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
+                    <span style={{
+                      fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:999,
+                      background: pal?.bg || "#F5E6B0",
+                      color:"#1B2D4F",
+                      display:"inline-block",
+                      animation:`badgePop 0.38s ${delay} cubic-bezier(0.34,1.56,0.64,1) both`,
+                    }}>{pal?.label}</span>
+                    {!hasLink
+                      ? <span style={{ fontSize:10, color:"#CCC", border:"1px solid #EEE", padding:"2px 7px", borderRadius:999 }}>준비중</span>
+                      : <span style={{
+                          fontSize:15, color: isH ? "#B8902A" : "rgba(184,144,42,0.3)",
+                          transition:"transform 0.2s, color 0.15s", display:"inline-block",
+                          transform: isH ? "translate(2px,-2px)" : "none",
+                        }}>↗</span>
+                    }
+                  </div>
+
+                  {/* 제목 */}
+                  <div style={{
+                    fontSize:15, fontWeight:700,
+                    color: isH ? "#1A1208" : "#2A2010",
+                    lineHeight:1.5, letterSpacing:"-0.02em", marginBottom:5,
+                    transition:"color 0.15s",
+                  }}>{item.title}</div>
+
+                  {/* 설명 — hover 시 펼쳐짐 */}
+                  <div style={{
+                    fontSize:12.5, color:"rgba(26,18,8,0.38)", lineHeight:1.65,
+                    maxHeight: isH ? "80px" : "0px",
+                    opacity: isH ? 1 : 0,
+                    overflow:"hidden",
+                    transition:"max-height 0.28s ease, opacity 0.22s ease",
+                  }}>{item.desc}</div>
                 </div>
-                <div style={{ fontSize:14.5, fontWeight:700, lineHeight:1.45, color: isH ? "#F2EBE0" : "#D9CFC3", transition:"color 0.2s", letterSpacing:"-0.01em" }}>
-                  {item.title}
-                </div>
-                <div style={{ fontSize:12, color:"rgba(242,235,224,0.35)", lineHeight:1.6, fontWeight:300 }}>
-                  {item.desc}
-                </div>
-                <div style={{
-                  marginTop:2, display:"flex", justifyContent:"flex-end",
-                  color: isH ? "#C8955A" : "rgba(139,94,60,0.38)",
-                  fontSize:15, transition:"all 0.2s",
-                  transform: isH ? "translate(2px,-2px)" : "none",
-                }}>↗</div>
-              </a>
+              </div>
             );
           })}
         </div>
-
-        {filtered.length === 0 && (
-          <div style={{ textAlign:"center", padding:"60px 0", color:"rgba(139,94,60,0.38)" }}>
-            <div style={{ fontSize:30, marginBottom:10 }}>🔍</div>
-            <div style={{ fontSize:14 }}>검색 결과가 없어요</div>
-          </div>
-        )}
       </div>
     </Shell>
   );
